@@ -8,5 +8,5 @@ variable "resource_group_name" {
 }
 
 variable "vpc_name" {
-  default = "harini-test-vpc"
+  default = "ts-test-vpc"
 }
