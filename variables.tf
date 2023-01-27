@@ -9,4 +9,5 @@ variable "resource_group_name" {
 
 variable "vpc_name" {
   default = "ts-test-vpc"
+  sensitive = true
 }
