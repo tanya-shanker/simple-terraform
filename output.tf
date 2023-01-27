@@ -1,6 +1,7 @@
 output "vpc_name" {
   description = "Name of VPC instance"
   value       = var.vpc_name
+  sensitive = true
 }
 
 output "dummy_sensitive_val" {
