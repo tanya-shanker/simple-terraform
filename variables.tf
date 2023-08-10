@@ -9,4 +9,5 @@ variable "resource_group_name" {
 
 variable "vpc_name" {
   description = "vpc name"
+default = "simple-vpc"
 }
