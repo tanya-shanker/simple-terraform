@@ -21,7 +21,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           GITHUB_ACTOR: ${{ github.actor }}
         run: |
-          if [[ "$GITHUB_ACTOR" == "Tanya-Shanker" ]]; then
+          if [[ "$GITHUB_ACTOR" == "tanya-shanker" ]]; then
             echo "Notifying Slack..."
 
             EVENT_NAME="${{ github.event_name }}"
