@@ -1,0 +1,96 @@
+name: Slack Notifications
+
+on:
+  issues:
+    types: [opened, edited, closed]
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [opened, closed, edited]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  slack_notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack notification
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_ACTOR: ${{ github.actor }}
+        run: |
+          if [[ "$GITHUB_ACTOR" == "Tanya-Shanker" ]]; then
+            echo "Notifying Slack..."
+
+            EVENT_NAME="${{ github.event_name }}"
+            ACTION="${{ github.event.action }}"
+            EMOJI=":bell:"  # Default
+
+            # Determine the emoji based on event type and action
+            if [[ "$EVENT_NAME" == "issues" ]]; then
+              EMOJI=":bug:"
+            elif [[ "$EVENT_NAME" == "issue_comment" ]]; then
+              EMOJI=":memo:"
+            elif [[ "$EVENT_NAME" == "pull_request_review_comment" || "$EVENT_NAME" == "pull_request_review" ]]; then
+              EMOJI=":speech_balloon:"
+            elif [[ "$EVENT_NAME" == "pull_request" ]]; then
+              if [[ "$ACTION" == "opened" ]]; then
+                EMOJI=":sparkles:"
+              elif [[ "$ACTION" == "closed" && "${{ github.event.pull_request.merged }}" == "true" ]]; then
+                EMOJI=":twisted_rightwards_arrows:"
+              else
+                EMOJI=":hammer:"
+              fi
+            fi
+
+            # Determine URL for the GitHub resource
+            URL="${{ github.event.pull_request.html_url || github.event.issue.html_url || github.event.comment.html_url }}"
+
+            # Send the message
+            curl -X POST -H 'Content-type: application/json' \
+            --data "$(cat <<EOF
+          {
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "${EMOJI} GitHub Activity Alert!",
+                  "emoji": true
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*${GITHUB_ACTOR}* just performed an action in *${{ github.repository }}* ${EMOJI}\n*Event:* \`${EVENT_NAME}\` / *Action:* \`${ACTION}\`"
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "🔗 <${URL}|View this on GitHub>"
+                }
+              },
+              {
+                "type": "context",
+                "elements": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "Triggered via GitHub Actions • <https://github.com/${{ github.repository }}|${{ github.repository }}>"
+                  }
+                ]
+              },
+              {
+                "type": "divider"
+              }
+            ]
+          }
+          EOF
+          )" "$SLACK_WEBHOOK_URL"
+                    else
+                      echo "Event not triggered by your user ($GITHUB_ACTOR), skipping."
+                    fi
